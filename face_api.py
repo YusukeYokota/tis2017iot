@@ -46,10 +46,66 @@ face_api_headers = {
 face_api_params = urllib.parse.urlencode({
     'returnFaceId': 'false',
     'returnFaceLandmarks': 'false',
-    'returnFaceAttributes': 'age,gender',
+    'returnFaceAttributes': 'age,gender,facialHair,glasses',
 })
 
 
+def getFacesData(results):
+    
+    gender = ''
+    age = ''
+    facialHair = ''
+    glasses = ''
+    
+
+    # 顔の検出人数分だけループ
+    for result in results:
+        # 性別と年齢のみ取り出す
+        gender = result['faceAttributes']['gender']
+        age = result['faceAttributes']['age']
+        facialHair = result['faceAttributes']['facialHair']
+        glasses = result['faceAttributes']['glasses']
+        
+        print ('----------')
+        print ('gender: ' + str(gender) )
+        print ('age: ' + str(age))
+        print ('facialHair: ' + str(facialHair))
+        print ('glasses: ' + str(glasses))
+        
+        
+
+    return (gender, age, facialHair, glasses)
+
+def openImage(movie_url):
+    #cmd = "gpicview " + image
+    cmd = "chromium-browser " +movie_url
+    #cmd = movie_url
+    subprocess.call(cmd, shell=True)
+
+before_url = ''
+def selectImage(gender, age, facialHair, glasses):
+    image_url = ""
+    if age == "": #error syori
+        pass
+    else:
+        age = int(age)
+
+        if 0 < age < 30: #20made
+            image_url = "https://www.youtube.com/watch?v=XJ3K8idaax4"
+        elif 30 < age < 120 : #20izyou
+            image_url = "https://www.youtube.com/watch?v=V_vPGpuHywQ" #wakai_dansei
+        else:
+            pass
+
+        if age == "":
+            pass
+        else:
+            if image_url == before_url: # hyouzizumi
+                pass
+            else:
+                before_url == image_url #uwagaki
+                openImage(image_url)
+    
 
 def detect_faces(filename):
     """
@@ -74,7 +130,7 @@ def shutter_camera():
     """
 
     # cam.jpgというファイル名、640x480のサイズ、待ち時間5秒で撮影する
-    cmd = "raspistill -o cam.jpg -h 640 -w 480 -t 5000"
+    cmd = "raspistill -n -o  cam.jpg -h 640 -w 480 -t 5000"
     subprocess.call(cmd, shell=True)
 
 try:
@@ -94,6 +150,14 @@ try:
             results = detect_faces('cam.jpg')
             print('Done.')
 
+            #add
+            (gender, age, facialHair, glasses) = getFacesData(results)
+            if gender is None:
+                print ('empty')
+            else:
+                selectImage(gender, age, facialHair, glasses)
+                
+
             if len(results) > 0:
                 # Kintoneに送信
                 print('Sending face attributes to Kintone...')
@@ -106,7 +170,7 @@ try:
 
         print('Wait 10 seconds...')
         print('------------------')
-        sleep(1)
+        sleep(5)
 
 except KeyboardInterrupt:
     pass
